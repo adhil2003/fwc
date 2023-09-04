@@ -1,0 +1,83 @@
+#include <avr/io.h>
+#include <util/delay.h>
+
+// D flip-flop pins
+#define dPin1 2
+#define clkPin1 3
+#define qPin1 4
+#define qBarPin1 5
+
+#define dPin2 6
+#define clkPin2 7
+#define qPin2 8
+#define qBarPin2 9
+
+// 7-segment display pins
+#define aPin 10
+#define bPin 11
+#define cPin 12
+#define dPin 13
+#define ePin 14 // Change this to the appropriate pin number
+#define fPin 15 // Change this to the appropriate pin number
+#define gPin 16 // Change this to the appropriate pin number
+
+void setup() {
+    // Configure pins as input or output
+    DDRC = (1 << dPin1) | (1 << clkPin1) | (1 << dPin2) | (1 << clkPin2);
+    DDRC &= ~((1 << qPin1) | (1 << qBarPin1) | (1 << qPin2) | (1 << qBarPin2));
+    DDRB = (1 << aPin) | (1 << bPin) | (1 << cPin) | (1 << dPin);
+    DDRB &= ~((1 << ePin) | (1 << fPin) | (1 << gPin));
+}
+
+int main() {
+    // Initialize
+    setup();
+
+    while (1) {
+        // Read inputs for Flip-flop 1
+        bool d1 = (PINC & (1 << dPin1)) != 0;
+        bool clk1 = (PINC & (1 << clkPin1)) != 0;
+
+        // Read inputs for Flip-flop 2
+        bool d2 = (PINC & (1 << dPin2)) != 0;
+        bool clk2 = (PINC & (1 << clkPin2)) != 0;
+
+        // Update Flip-flop 1
+        if (clk1 && d1) {
+            PORTC |= (1 << qPin1);
+            PORTC &= ~(1 << qBarPin1);
+        } else if (clk1 && !d1) {
+            PORTC &= ~(1 << qPin1);
+            PORTC |= (1 << qBarPin1);
+        } else if (!clk1 && !d1) {
+            PORTC &= ~(1 << qPin1);
+            PORTC |= (1 << qBarPin1);
+        } else if (!clk1 && d1) {
+            PORTC &= ~(1 << qPin1);
+            PORTC |= (1 << qBarPin1);
+        }
+
+        // Update Flip-flop 2
+        if (clk2 && d2) {
+            PORTC |= (1 << qPin2);
+            PORTC &= ~(1 << qBarPin2);
+        } else if (clk2 && !d2) {
+            PORTC &= ~(1 << qPin2);
+            PORTC |= (1 << qBarPin2);
+        } else if (!clk2 && !d2) {
+            PORTC &= ~(1 << qPin2);
+            PORTC |= (1 << qBarPin2);
+        } else if (!clk2 && d2) {
+            PORTC &= ~(1 << qPin2);
+            PORTC |= (1 << qBarPin2);
+        }
+
+        // Display Q and Q' states on the 7-segment display
+        PORTB = (PINC & (1 << qPin1)) | (PINC & (1 << qBarPin1));
+        PORTB |= ((PINC & (1 << qBarPin1)) << (ePin - bPin));
+        PORTB |= ((PINC & (1 << qBarPin1)) << (fPin - bPin));
+        PORTB |= ((PINC & (1 << qPin1)) << (gPin - bPin));
+    }
+
+    return 0;
+}
